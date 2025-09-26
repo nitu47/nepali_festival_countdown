@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Dashain",
+    "type": "BS",
+    "month": 6,
+    "day": 6
+  },
+  {
+    "name": "Tihar",
+    "type": "BS",
+    "month": 7,
+    "day": 3
+  },
+  {
+    "name": "Holi",
+    "type": "BS",
+    "month": 11,
+    "day": 18
+  }
+]

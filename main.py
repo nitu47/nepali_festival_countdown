@@ -54,47 +54,97 @@ def get_time_delta_str(target_dt: datetime) -> str:
 class App:
     def __init__(self, root):
         self.root = root
-        root.title("Nepali Festival Countdown (BS)")
-        root.geometry("520x300")
+        root.title("🎊 Nepali Festival Countdown (BS)")
+        root.geometry("540x380")
+
+        # 🌸 Main background color
+        root.configure(bg="#fff3e6")  # warm cream color
+
+        # 🎨 Style setup
+        style = ttk.Style()
+        style.theme_use("clam")
+
+        style.configure("TFrame", background="#fff3e6")
+        style.configure("TLabel", background="#fff3e6", font=("Segoe UI", 12))
+        style.configure("TButton", font=("Segoe UI", 10, "bold"), padding=6)
+        style.map("TButton",
+                  background=[("active", "#ff5722")],
+                  foreground=[("active", "white")])
+
+        style.configure("TCombobox", padding=4)
+
         self.festivals = load_festivals()
 
-        # Top frame: dropdown + add/remove buttons
-        top = ttk.Frame(root, padding=12)
+        # --- Gradient Banner ---
+        banner_height = 70
+        banner = tk.Canvas(root, height=banner_height, highlightthickness=0, bd=0)
+        banner.pack(fill="x")
+
+        self._draw_gradient(banner, "#ff9800", "#e53935")  # orange to red
+        banner.create_text(270, banner_height // 2, text="🎉 Nepali Festivals 🎉",
+                           font=("Segoe UI", 18, "bold"), fill="white")
+
+        # --- Top frame ---
+        top = ttk.Frame(root, padding=12, style="TFrame")
         top.pack(fill="x")
 
-        self.combo = ttk.Combobox(top, state="readonly")
+        self.combo = ttk.Combobox(top, state="readonly", style="TCombobox")
         self.refresh_combo_values()
         if self.festivals:
             self.combo.current(0)
         self.combo.pack(side="left", padx=(0, 8), fill="x", expand=True)
         self.combo.bind("<<ComboboxSelected>>", lambda e: self.update_display())
 
-        add_btn = ttk.Button(top, text="Add Festival", command=self.show_add_window)
+        add_btn = ttk.Button(top, text="➕ Add", command=self.show_add_window, style="TButton")
         add_btn.pack(side="left", padx=6)
 
-        rem_btn = ttk.Button(top, text="Remove Selected", command=self.remove_selected)
+        rem_btn = ttk.Button(top, text="🗑 Remove", command=self.remove_selected, style="TButton")
         rem_btn.pack(side="left")
 
-        # Countdown display
-        body = ttk.Frame(root, padding=12)
+        # --- Body frame ---
+        body = ttk.Frame(root, padding=12, style="TFrame")
         body.pack(fill="both", expand=True)
 
-        self.info_label = ttk.Label(body, text="", font=(None, 14))
+        # Label with icon + festival name
+        self.info_label = ttk.Label(body, text="", font=("Segoe UI", 14, "bold"), foreground="#333")
         self.info_label.pack(pady=12)
 
-        self.count_label = ttk.Label(body, text="", font=("Consolas", 28))
+        # Countdown
+        self.count_label = ttk.Label(body, text="", font=("Consolas", 30, "bold"), foreground="#e53935")
         self.count_label.pack()
 
         note = "BS support only. Make sure 'nepali-datetime' is installed."
-        self.note_label = ttk.Label(root, text=note, font=(None, 9), foreground="gray")
+        self.note_label = ttk.Label(root, text=note, font=("Segoe UI", 9),
+                                    foreground="gray", background="#fff3e6")
         self.note_label.pack(side="bottom", pady=6)
 
         self._target_dt = None
         self.update_display()
         self._ticker()
 
+    # --- Draw gradient banner ---
+    def _draw_gradient(self, canvas, color1, color2):
+        """Draw vertical gradient on canvas."""
+        width = 540
+        height = int(canvas["height"])
+        limit = height
+        (r1, g1, b1) = self.root.winfo_rgb(color1)
+        (r2, g2, b2) = self.root.winfo_rgb(color2)
+
+        r_ratio = (r2 - r1) / limit
+        g_ratio = (g2 - g1) / limit
+        b_ratio = (b2 - b1) / limit
+
+        for i in range(limit):
+            nr = int(r1 + (r_ratio * i))
+            ng = int(g1 + (g_ratio * i))
+            nb = int(b1 + (b_ratio * i))
+            color = f"#{nr//256:02x}{ng//256:02x}{nb//256:02x}"
+            canvas.create_line(0, i, width, i, fill=color)
+
     def refresh_combo_values(self):
-        names = [f.get("name", "Unnamed") for f in self.festivals]
+        # Add emoji icons next to festival names 🌸🪔
+        names = [f"🌸 {f.get('name', 'Unnamed')}" for f in self.festivals]
         if not names:
             names = ["(no festivals)"]
         self.combo["values"] = names
@@ -109,7 +159,10 @@ class App:
         fest = self.festivals[idx]
         try:
             upcoming_ad = next_occurrence(fest)
-            self.info_label.config(text=f"{fest['name']} — on {upcoming_ad.strftime('%Y-%m-%d')} (AD)")
+            # Show icon 🪔 for main label
+            self.info_label.config(
+                text=f"🪔 {fest['name']} — {upcoming_ad.strftime('%Y-%m-%d')} (AD)"
+            )
             self._target_dt = datetime.combine(upcoming_ad, datetime.min.time())
         except Exception as e:
             self.info_label.config(text=f"Error: {e}")
@@ -124,6 +177,7 @@ class App:
     def show_add_window(self):
         win = tk.Toplevel(self.root)
         win.title("Add BS Festival")
+        win.configure(bg="#fff3e6")
 
         ttk.Label(win, text="Name:").grid(row=0, column=0, sticky="e")
         name_entry = ttk.Entry(win)
